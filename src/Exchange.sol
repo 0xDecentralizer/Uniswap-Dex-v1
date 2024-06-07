@@ -40,6 +40,24 @@ contract Exchange is ERC20 {
         }
 
         // If the reserve is not empty, calculate the amount of LP Tokens to be minted
+        uint256 ethReservePriorToFunctionCall = ethReserveBalance - msg.value;
+        uint256 minTokenAmountRequire = (msg.value * tokenReserveBalance) / 
+            ethReservePriorToFunctionCall;
+        require(amountOfToken >= minTokenAmountRequire,
+            "Insufficient amount of tokens provided"
+        );
+        
+        // Transfer the token from the user to the exchange
+        token.transferFrom(msg.sender, address(this), minTokenAmountRequire);
 
+        // Calculate the amount of LP tokens to be minted
+        lpTokensToMint = 
+            (totalSupply() * msg.value) /
+            ethReservePriorToFunctionCall;
+
+        // Mint LP tokens to the user
+        _mint(msg.sender, lpTokensToMint);
+
+        return lpTokensToMint;
     }
 }
