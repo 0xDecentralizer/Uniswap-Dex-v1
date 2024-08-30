@@ -37,6 +37,8 @@ contract Exchange is ERC20 {
 
             // Mint LP tokens to the user
             _mint(msg.sender, lpTokensToMint);
+
+            return lpTokensToMint;
         }
 
         // If the reserve is not empty, calculate the amount of LP Tokens to be minted
@@ -59,5 +61,32 @@ contract Exchange is ERC20 {
         _mint(msg.sender, lpTokensToMint);
 
         return lpTokensToMint;
+    }
+
+    // removeLiquidity allows user to remove their liquidities from the exvhange (pool)
+    function removeLiquidity(
+        uint256 amountOfLPTokens
+    ) public returns(uint256, uint256) {
+        // Check that user want to remove >0 LP tokens
+        require(
+            amountOfLPTokens > 0,
+            "Amount of token to remove must be greater than 0"
+        );
+
+        uint256 ethReserveBalance = address(this).balance;
+        uint256 lpTokenTotalSupply = totalSupply();
+
+        // Calculate the amount of ETH and Tokens to return to the user
+        uint256 ethToReturn = (ethReserveBalance * amountOfLPTokens) / 
+            lpTokenTotalSupply;
+        uint256 tokenToReturn = (totalSupply() * amountOfLPTokens) / 
+            lpTokenTotalSupply;
+
+        // Burn the LP tokens from the user, and transfer the ETH and token to the user
+        _burn(msg.sender, amountOfLPTokens);
+        payable(msg.sender).transfer(ethToReturn);
+        ERC20(tokenAddress).transfer(msg.sender, tokenToReturn);
+        
+        return (ethToReturn, tokenToReturn);
     }
 }
